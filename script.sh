@@ -56,32 +56,65 @@ install_git() {
     if command -v apt-get &> /dev/null; then
         print_info "Detected APT (Debian/Ubuntu). Installing..."
         sudo apt-get update && sudo apt-get install -y git
+        if ! command -v git &> /dev/null; then
+            print_error "Git installation failed via APT."
+            exit 1
+        fi
 
     elif command -v dnf &> /dev/null; then
         print_info "Detected DNF (Fedora). Installing..."
         sudo dnf install -y git
+        if ! command -v git &> /dev/null; then
+            print_error "Git installation failed via DNF."
+            exit 1
+        fi
 
     elif command -v yum &> /dev/null; then
         print_info "Detected YUM (RHEL/CentOS). Installing..."
         sudo yum install -y git
+        if ! command -v git &> /dev/null; then
+            print_error "Git installation failed via YUM."
+            exit 1
+        fi
 
     elif command -v pacman &> /dev/null; then
         print_info "Detected Pacman (Arch). Installing..."
         sudo pacman -Sy --noconfirm git
+        if ! command -v git &> /dev/null; then
+            print_error "Git installation failed via Pacman."
+            exit 1
+        fi
 
     elif command -v zypper &> /dev/null; then
         print_info "Detected Zypper (openSUSE). Installing..."
         sudo zypper install -y git
+        if ! command -v git &> /dev/null; then
+            print_error "Git installation failed via Zypper."
+            exit 1
+        fi
 
     elif command -v emerge &> /dev/null; then
         print_info "Detected Portage (Gentoo). Installing..."
         sudo emerge --ask dev-vcs/git
+        if ! command -v git &> /dev/null; then
+            print_error "Git installation failed via Portage."
+            exit 1
+        fi
 
     else
         print_error "Failed to detect package manager."
         print_warn "Install git manually please, I can't recognize your linux system :3"
         print_warn "Once git installed run script again!"
         exit 1
+    fi
+
+    #Checking installation
+    if ! command -v git &> /dev/null; then
+        print_error "Git is not installed or not in PATH."
+        print_warn "Please install git manually and try again."
+        exit 1
+    else
+        print_info "Git installed successfully!"
     fi
 }
 
@@ -98,7 +131,6 @@ install_kitty() {
 echo ""
 print_info "Installing git..."
 install_git
-print_info "Git was installed sucessfully!"
 
 #Installing Kitty
 echo ""
