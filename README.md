@@ -1,3 +1,3 @@
 # Jpscript
 
-curl -fsSL https://github.com/JPscissor/Jpscript/blob/main/script.sh | bash
+``` curl -fsSL https://raw.githubusercontent.com/JPscissor/Jpscript/refs/heads/main/script.sh | bash ```
