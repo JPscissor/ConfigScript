@@ -49,23 +49,7 @@ echo -e "  - fastfetch"
 echo -e "  - VScodium"${NC}
 echo ""
 
-#Confirmation
-while true; do
-    read -p $'Do you want to start?\n1 - Start\n0 - Exit\n> ' choice
-    case "$choice" in
-        1)
-            echo -e "${BOLD}${GREEN}Starting!${NC}"
-            break
-            ;;
-        0)
-            echo -e "${BOLD}${GREEN}Exit.${NC}"
-            exit 0
-            ;;
-        *)
-            echo -e "${BOLD}${GREEN}Incorrect option.. Enter 1 or 0.${NC}"
-            ;;
-    esac
-done
+
 
 #Functions
 install_git() {
@@ -105,7 +89,7 @@ install_kitty() {
     curl -L https://sw.kovidgoyal.net/kitty/installer.sh  | sh /dev/stdin launch=n
     KITTYPATH="$HOME/.local/bin"
 
-    
+
 
 }
 
