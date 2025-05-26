@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 BOLD='\e[1m'
 GREEN='\e[92m'
 PURPLE='\e[95m'
@@ -8,6 +7,7 @@ BLACK_BG='\e[40m'
 RED='\e[31m'
 YELLOW='\e[33m'
 NC='\e[0m'
+
 
 print_info() {
     local text="$1"
@@ -38,10 +38,10 @@ print_warn() {
 #Greetings
 clear
 echo ""
-echo -e "${BOLD}${GREEN}Hello ${BOLD}${PURPLE}$USER${NC}${BOLD}${GREEN}, I am ${PURPLE}JPscissor${NC}, ${BOLD}${GREEN}an author of this script.${NC}"
-echo -e "${BOLD}${GREEN}${BLACK_BG}This script is my personal tool, to make my life easier, but i think it can be helpful for you too!${NC}"
+echo -e "Hello $USER, I am ${PURPLE}JPscissor${NC}, an author of this script."
+echo -e "This script is my personal tool, to make my life easier, but i think it can be helpful for you too!"
 echo ""
-echo -e "${BOLD}${GREEN}This script will isntall and configure follow packages:${NC}"
+echo -e "This script will isntall and configure follow packages:"
 echo -e "  ${BOLD}${PURPLE}- git"
 echo -e "  - kitty"
 echo -e "  - zen browser"
@@ -53,9 +53,13 @@ echo ""
 
 #Functions
 install_git() {
+
+    if ! command -v git &> /dev/null; then
+        
+
     if command -v apt-get &> /dev/null; then
         print_info "Detected APT (Debian/Ubuntu). Installing..."
-        sudo apt-get update && sudo apt-get install -y git
+        sudo apt-get update && sudo apt-get install git
         if ! command -v git &> /dev/null; then
             print_error "Git installation failed via APT."
             exit 1
@@ -116,13 +120,47 @@ install_git() {
     else
         print_info "Git installed successfully!"
     fi
+
+    else
+        print_info "Git is already installed. Moving on..."
+    fi
 }
 
+
+#Setup
+REPO_URL="https://github.com/JPscissor/ConfigScript"
+FOLDER_NAME="apps_configs"
+TEMP_DIR=$(mktemp -d)
+
+
 install_kitty() {
-    curl -L https://sw.kovidgoyal.net/kitty/installer.sh  | sh /dev/stdin launch=n
     KITTYPATH="$HOME/.local/bin"
 
+    if ! commad -v kitty &> /dev/null; then
+        print_info "Kitty is already installed! Moving on..."
 
+    else
+        curl -L https://sw.kovidgoyal.net/kitty/installer.sh  | sh /dev/stdin launch=n
+        
+    fi
+
+
+    #Cloning repo
+    print_info "Configuring kitty..."
+    print_info "Cloning repo: $REPO_URL"
+    git clone "$REPO_URL" "TEMP_DIR" || {
+        rm -rf "$TEMP_DIR"
+    }
+
+    mkdir -p ~/.config
+    print_info "Copying files to .config..."
+    cp -r "$TEMP_DIR/$FOLDER_NAME"/* ~/.config/ || {
+        print_error "Ошибка копирования файлов."
+        rm -rf "$TEMP_DIR"
+    }
+
+    #Clearing
+    rm -rf "$TEMP_DIR"
 
 }
 
