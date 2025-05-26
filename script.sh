@@ -154,7 +154,7 @@ install_kitty() {
 
     mkdir -p ~/.config
     print_info "Copying files to .config..."
-    cp -r "$TEMP_DIR/$FOLDER_NAME"/* ~/.config/ || {
+    cp -r "$TEMP_DIR"/* ~/.config/ || {
         print_error "Ошибка копирования файлов."
         rm -rf "$TEMP_DIR"
     }
