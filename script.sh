@@ -130,7 +130,7 @@ install_git() {
 #Setup
 REPO_URL="https://github.com/JPscissor/ConfigScript"
 FOLDER_NAME="apps_configs"
-TEMP_DIR=$(mktemp -d)
+TEMP_DIR="TMP_DIR"
 
 
 install_kitty() {
@@ -141,26 +141,28 @@ install_kitty() {
 
     else
         curl -L https://sw.kovidgoyal.net/kitty/installer.sh  | sh /dev/stdin launch=n
-        
     fi
 
 
     #Cloning repo
+    echo ""
     print_info "Configuring kitty..."
     print_info "Cloning repo: $REPO_URL"
-    git clone "$REPO_URL" "TEMP_DIR" || {
+    git clone "$REPO_URL" "$TEMP_DIR" || {
         rm -rf "$TEMP_DIR"
     }
 
     mkdir -p ~/.config
-    print_info "Copying files to .config..."
-    cp -r "$TEMP_DIR"/* ~/.config/ || {
-        print_error "Ошибка копирования файлов."
+    print_info "Copying files to ~/.config..."
+    cp -r "$TEMP_DIR"/"$FOLDER_NAME"/* ~/.config/ || {
+        print_error "Unable to clone files"
         rm -rf "$TEMP_DIR"
     }
 
     #Clearing
     rm -rf "$TEMP_DIR"
+
+    print_info "Done!"
 
 }
 
