@@ -49,7 +49,8 @@ echo -e "  - fastfetch"
 echo -e "  - VScodium"${NC}
 echo ""
 
-
+print_info "Instalation will start soonly..."
+sleep 5
 
 #Functions
 install_git() {
@@ -134,9 +135,8 @@ TEMP_DIR="TMP_DIR"
 
 
 install_kitty() {
-    KITTYPATH="$HOME/.local/bin"
 
-    if ! commad -v kitty &> /dev/null; then
+    if ! commad kitty &> /dev/null; then
         print_info "Kitty is already installed! Moving on..."
 
     else
@@ -162,17 +162,25 @@ install_kitty() {
     #Clearing
     rm -rf "$TEMP_DIR"
 
+    #Adding to PATH
+    mkdir -p ~/.local/bin
+    ln -sf ~/.local/kitty.app/bin/kitty ~/.local/bin/kitty
+
     print_info "Done!"
 
 }
 
 
 #Installing git
+clear
 echo ""
 print_info "Installing git..."
 install_git
+sleep 3
 
 #Installing Kitty
+clear
 echo ""
 print_info "Installing kitty..."
 install_kitty
+sleep 3 
