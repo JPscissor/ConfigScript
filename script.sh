@@ -31,7 +31,7 @@ print_error() {
 
 print_warn() {
     local text="$1"
-    echo -e "${YELLOW}[ERROR]${NC} ${BOLD}${YELLOW}$text${NC}"
+    echo -e "${YELLOW}[WARNING]${NC} ${BOLD}${YELLOW}$text${NC}"
 }
 
 
@@ -53,6 +53,15 @@ print_info "Instalation will start soonly..."
 sleep 5
 
 #Functions
+
+check_internet() {
+    if ! ping -c 1 -W 1 google.com &> /dev/null; then
+        print_error "No internet connection!!!"
+        exit 1
+    fi
+}
+
+
 install_git() {
 
     if ! command -v git &> /dev/null; then
@@ -136,7 +145,7 @@ TEMP_DIR="TMP_DIR"
 
 install_kitty() {
 
-    if ! commad kitty &> /dev/null; then
+    if  commad kitty &> /dev/null; then
         print_info "Kitty is already installed! Moving on..."
 
     else
@@ -163,13 +172,149 @@ install_kitty() {
     rm -rf "$TEMP_DIR"
 
     #Adding to PATH
-    mkdir -p ~/.local/bin
-    ln -sf ~/.local/kitty.app/bin/kitty ~/.local/bin/kitty
+    #mkdir -p ~/.local/bin
+    #ln -sf ~/.local/kitty.app/bin/kitty ~/.local/bin/kitty
 
     print_info "Done!"
 
 }
 
+
+# === Определение дистрибутива ===
+detect_distro() {
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        echo "$ID"
+    elif [ -f /etc/arch-release ]; then
+        echo "arch"
+    elif [ -f /etc/fedora-release ]; then
+        echo "fedora"
+    elif [ -f /etc/debian_version ]; then
+        echo "debian"
+    else
+        echo "unknown"
+    fi
+}
+
+
+get_arch() {
+    uname -m | sed -e 's/aarch64/arm64/' -e 's/x86_64/amd64/'
+}
+
+
+download_zen() {
+    local arch=$(get_arch)
+    local url="https://github.com/thomas-xin/ZenBrowser/releases/latest/download/zen-browser-complete-$arch.AppImage" 
+
+    print_info "Скачиваем Zen Browser для архитектуры: $arch"
+    wget -O zen-browser.AppImage "$url"
+    chmod +x zen-browser.AppImage
+}
+
+
+install_aur() {
+    local aur_helper="yay"
+    if command -v paru &> /dev/null; then
+        aur_helper="paru"
+    fi
+
+    print_info "Устанавливаем Zen Browser через $aur_helper..."
+    $aur_helper -S zen-browser --noconfirm
+}
+
+
+install_flatpak() {
+    print_info "Устанавливаем Zen Browser через Flatpak..."
+    flatpak install flathub dev.zen_browser.ZenBrowser -y
+}
+
+
+install_native_package() {
+    local distro="$1"
+    local arch=$(get_arch)
+    local package_type=""
+    local package_name=""
+
+    case "$distro" in
+        ubuntu|debian)
+            package_type="deb"
+            package_name="zen-browser.deb"
+            ;;
+        fedora|opensuse*)
+            package_type="rpm"
+            package_name="zen-browser.rpm"
+            ;;
+        *)
+            print_warn "Нативный пакет для $distro не найден. Используем AppImage."
+            download_zen
+            return
+            ;;
+    esac
+
+    local url="https://github.com/thomas-xin/ZenBrowser/releases/latest/download/zen-browser-complete.$package_type" 
+
+    print_info "Скачиваем и устанавливаем $package_type пакет..."
+    wget -O "$package_name" "$url"
+
+    case "$distro" in
+        ubuntu|debian)
+            sudo apt install -y "./$package_name"
+            ;;
+        fedora|opensuse*)
+            if command -v dnf &> /dev/null; then
+                sudo dnf install -y "./$package_name"
+            elif command -v zypper &> /dev/null; then
+                sudo zypper install -y "./$package_name"
+            fi
+            ;;
+    esac
+
+    rm -f "$package_name"
+}
+
+install_zen() {
+    distro=$(detect_distro)
+
+    case "$distro" in
+        debian|ubuntu)
+            install_native_package "$distro"
+            ;;
+        fedora|opensuse*)
+            install_native_package "$distro"
+            ;;
+        arch)
+            if command -v yay &> /dev/null || command -v paru &> /dev/null; then
+                install_aur
+            else
+                print_warn "AUR helper не найден. Установите yay или paru."
+                download_zen
+            fi
+            ;;
+        *)
+            # Попробуем установить через Flatpak
+            if command -v flatpak &> /dev/null; then
+                install_flatpak
+            else
+                print_warn "Flatpak не установлен. Установка через AppImage..."
+                download_zen
+            fi
+            ;;
+    esac
+
+    print_info "Zen Browser установлен!"
+    echo -e "Запустите его командой: \n- Если установлен через пакет: zen-browser\n- Если через AppImage: ./zen-browser.AppImage"
+}
+
+
+
+#Checking Internet
+clear
+echo ""
+print_info "Checking internet connection..."
+check_internet
+sleep 2
+print_info "Everything OK!"
+sleep 3
 
 #Installing git
 clear
@@ -183,4 +328,8 @@ clear
 echo ""
 print_info "Installing kitty..."
 install_kitty
-sleep 3 
+sleep 3
+
+#Installing zen
+clear
+echo ""
