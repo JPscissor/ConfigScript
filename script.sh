@@ -180,7 +180,6 @@ install_kitty() {
 }
 
 
-# === Определение дистрибутива ===
 detect_distro() {
     if [ -f /etc/os-release ]; then
         . /etc/os-release
@@ -197,112 +196,40 @@ detect_distro() {
 }
 
 
-get_arch() {
-    uname -m | sed -e 's/aarch64/arm64/' -e 's/x86_64/amd64/'
-}
-
-
-download_zen() {
-    local arch=$(get_arch)
-    local url="https://github.com/thomas-xin/ZenBrowser/releases/latest/download/zen-browser-complete-$arch.AppImage" 
-
-    print_info "Скачиваем Zen Browser для архитектуры: $arch"
-    wget -O zen-browser.AppImage "$url"
-    chmod +x zen-browser.AppImage
-}
-
-
-install_aur() {
-    local aur_helper="yay"
-    if command -v paru &> /dev/null; then
-        aur_helper="paru"
+#flatpack install
+install_flatpak() {
+   
+    if command -v flatpak &> /dev/null; then
+        return 0
     fi
 
-    print_info "Устанавливаем Zen Browser через $aur_helper..."
-    $aur_helper -S zen-browser --noconfirm
+    if command -v apt-get &> /dev/null; then
+        sudo apt update && sudo apt install -y flatpak || { pass; exit 1; }
+    elif command -v dnf &> /dev/null; then
+        sudo dnf install -y flatpak || { pass; exit 1; }
+    elif command -v pacman &> /dev/null; then
+        sudo pacman -Sy --noconfirm flatpak || { pass; exit 1; }
+    elif command -v zypper &> /dev/null; then
+        sudo zypper install -y flatpak || { pass; exit 1; }
+    elif command -v emerge &> /dev/null; then
+        sudo emerge --ask app-admin/flatpak || { pass; exit 1; }
+    else
+        print_error "Can't install Flatpack. Please do it manualy :3 !!!"
+        exit 1
+    fi
+
+    flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo  || {
+        exit 1
+    }
+
+    print_warn "Flatpak installed. Restart session!"
 }
 
-
-install_flatpak() {
-    print_info "Устанавливаем Zen Browser через Flatpak..."
-    flatpak install flathub dev.zen_browser.ZenBrowser -y
-}
-
-
-install_native_package() {
-    local distro="$1"
-    local arch=$(get_arch)
-    local package_type=""
-    local package_name=""
-
-    case "$distro" in
-        ubuntu|debian)
-            package_type="deb"
-            package_name="zen-browser.deb"
-            ;;
-        fedora|opensuse*)
-            package_type="rpm"
-            package_name="zen-browser.rpm"
-            ;;
-        *)
-            print_warn "Нативный пакет для $distro не найден. Используем AppImage."
-            download_zen
-            return
-            ;;
-    esac
-
-    local url="https://github.com/thomas-xin/ZenBrowser/releases/latest/download/zen-browser-complete.$package_type" 
-
-    print_info "Скачиваем и устанавливаем $package_type пакет..."
-    wget -O "$package_name" "$url"
-
-    case "$distro" in
-        ubuntu|debian)
-            sudo apt install -y "./$package_name"
-            ;;
-        fedora|opensuse*)
-            if command -v dnf &> /dev/null; then
-                sudo dnf install -y "./$package_name"
-            elif command -v zypper &> /dev/null; then
-                sudo zypper install -y "./$package_name"
-            fi
-            ;;
-    esac
-
-    rm -f "$package_name"
-}
 
 install_zen() {
-    distro=$(detect_distro)
-
-    case "$distro" in
-        debian|ubuntu)
-            install_native_package "$distro"
-            ;;
-        fedora|opensuse*)
-            install_native_package "$distro"
-            ;;
-        arch)
-            if command -v yay &> /dev/null || command -v paru &> /dev/null; then
-                install_aur
-            else
-                print_warn "AUR helper не найден. Установите yay или paru."
-                download_zen
-            fi
-            ;;
-        *)
-            # Попробуем установить через Flatpak
-            if command -v flatpak &> /dev/null; then
-                install_flatpak
-            else
-                print_warn "Flatpak не установлен. Установка через AppImage..."
-                download_zen
-            fi
-            ;;
-    esac
-
-    print_info "Zen Browser установлен!"
-    echo -e "Запустите его командой: \n- Если установлен через пакет: zen-browser\n- Если через AppImage: ./zen-browser.AppImage"
+    install_flatpak
+    flatpak install flathub app.zen_browser.zen
+    print_info "Zen Browser Installed!"
 }
 
 
@@ -333,3 +260,4 @@ sleep 3
 #Installing zen
 clear
 echo ""
+install_zen
